@@ -1,0 +1,121 @@
+{% extends "base.html.twig" %}
+{% block title %}
+	{{ parent()|upper}}
+	- Edit
+{% endblock %}
+{% block titre %}
+	{% block body %}
+		consultation de
+		{{job.getType()}}
+	{% endblock %}
+	<h1>entreprise
+		{{job.getCompany ()}}
+	</h1><br>
+	<h1>{{ job.getDescription() }}</h1>
+	<h2>Date d'expiration
+		{{ job.getExpiresAt()| date('d-m-Y')}}</h2>
+	<h3>Image</h3>
+	{% if job.image is not null %}
+		<img src="{{job.image.url}}" alt="{{job.image.alt}}" width="200" height="200">
+	{% endif %}
+
+
+	<h3>Candidatures</h3>
+	<ul class="nav nav-pills nav-stacked">
+		{% for candidature in listCandidatures %}
+			<h4>
+				Candidat
+			</h4><br>
+			<li>{{ candidature.candidat}}</li>
+			<li>{{ candidature.contenu}}</li>
+			<li>{{ candidature.date | date('d-m-Y')}}</li>
+		{% endfor %}
+	</ul>
+{% endblock %}
+ {% if voiture.Image is not null %}
+                    <img src="{{ voiture.Image.getUrl() }}" alt="{{ voiture.Image.getAlt() }}" class="img-fluid" />
+                {% endif %}
+				 #[Route('/addImage/{id}', name: 'add_Image')]
+    public function addImage($entityManager,Request $request,int $id): Response
+    {
+
+
+    $model = $entityManager->getRepository(Voiture::class)->find($id);
+
+    if (!$model) {
+        throw $this->createNotFoundException('model not found');
+    }
+
+    $Image=new Image();
+    $Image->setNomVoiture($model);
+    $form=$this->createForm(ImageType::class,$Image);
+    $form->handleRequest($request);
+
+    if ($form->isSubmitted()&& $form->isValid()){
+
+        $entityManager=$entityManager->getManager();
+        $entityManager->persist($Image);
+        $entityManager->flush();
+        $this->addFlash('success','Image added');
+        return $this->redirectToRoute('show_Image',['id' => $id]);
+        
+    }
+    
+    return $this->render('Image/index.html.twig',['form'=>$form->createView(),
+     'model' => $model]);
+    }
+
+
+    #[Route('/Images', name: 'show_Image')]
+    public function showImage($entityManager,Request $request):Response
+     {
+        $em=$this->$entityManager->getManager();
+        $repo = $em->getRepository(Image::class);
+        $Images= $repo->findAll();
+
+    
+    return $this->render('Image/show.html.twig',['Images'=>$Images]);
+    }
+
+    #[Route('/deleteImage/{id}', name: 'delete_Image')]
+    public function deleteImage($entityManager,Request $request,$id):Response
+    {
+   
+       $em=$this->$entityManager->getManager();
+       $repos = $em->getRepository(Image::class)->find($id);
+       $em->remove($repos);
+       $em->flush();
+       $this->addFlash('success','Image deleted ');
+
+   
+   return $this->redirectToRoute('show_Image');
+   }
+
+   #[Route('/editImage/{id}', name: 'edit_Image')]
+   public function editImage($entityManager,Request $request, $id): Response
+   {
+       $em = $this->$entityManager->getManager();
+       $Image = $em->getRepository(Image::class)->find($id);
+   
+       if (!$Image) {
+           throw $this->createNotFoundException('Image not found');
+       }
+   
+       $editform = $this->createFormBuilder($Image)
+           ->add('url', TextType::class)
+           ->add('alt', TextType::class)
+           ->add('Save', SubmitType::class)
+           ->getForm();
+   
+       $editform->handleRequest($request);
+   
+       if ($editform->isSubmitted() && $editform->isValid()) {
+           $em->flush();
+           $this->addFlash('success', 'Image updated successfully');
+           return $this->redirectToRoute('show_Image');
+       }
+   
+       return $this->render('Image/edit.html.twig', [
+           'form' => $editform->createView(),
+       ]);
+   }
